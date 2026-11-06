@@ -23,8 +23,10 @@ RUN cp .env.example .env
 # Install Composer dependencies
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Create images directory if it doesn't exist and set proper permissions
+RUN mkdir -p /var/www/html/public/images && \
+    chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images && \
+    chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/public/images
 
 # Configure Apache
 RUN echo '<VirtualHost *:80>\n\
