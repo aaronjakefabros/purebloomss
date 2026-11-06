@@ -26,9 +26,6 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Make start.sh executable
-RUN chmod +x /var/www/html/start.sh
-
 # Configure Apache
 RUN echo '<VirtualHost *:80>\n\
     DocumentRoot /var/www/html/public\n\
@@ -40,5 +37,5 @@ RUN echo '<VirtualHost *:80>\n\
 
 EXPOSE 80
 
-# Run migrations then start Apache (all in one command)
-CMD bash -c "php artisan migrate --force && apache2-foreground"
+# GAMITIN ANG JSON ARRAY FORMAT PARA SA CMD (Ito ang susi!)
+CMD ["/bin/bash", "-c", "php artisan migrate --force && apache2-foreground"]
