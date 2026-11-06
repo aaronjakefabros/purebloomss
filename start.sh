@@ -1,20 +1,11 @@
 #!/bin/bash
 
-# Clear Laravel caches first
-php artisan config:clear
-php artisan cache:clear
-php artisan route:clear
-php artisan view:clear
+echo "=== Starting Pureblooms Deployment ==="
 
-# Run database migrations
-echo "Running migrations..."
+# 1. Run Migrations (Ito ang mag-create ng tables)
+echo "Running database migrations..."
 php artisan migrate --force
 
-# Optimize Laravel for production
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
-
+# 2. Start Apache Server
 echo "Starting Apache..."
-# Start Apache
 apache2-foreground
