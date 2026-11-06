@@ -17,7 +17,7 @@ WORKDIR /var/www/html
 # Copy files
 COPY . /var/www/html
 
-# IMPORTANT: Gumawa ng .env file para hindi mag-500 error ang Laravel
+# Create .env from example
 RUN cp .env.example .env
 
 # Install Composer dependencies
@@ -25,6 +25,9 @@ RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+
+# Make start.sh executable
+RUN chmod +x /var/www/html/start.sh
 
 # Configure Apache
 RUN echo '<VirtualHost *:80>\n\
@@ -36,4 +39,6 @@ RUN echo '<VirtualHost *:80>\n\
 </VirtualHost>' > /etc/apache2/sites-available/000-default.conf
 
 EXPOSE 80
-CMD ["apache2-foreground"]
+
+# Run migrations then start Apache (all in one command)
+CMD bash -c "php artisan migrate --force && apache2-foreground"
