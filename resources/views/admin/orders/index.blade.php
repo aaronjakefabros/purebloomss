@@ -15,44 +15,62 @@
                 <thead class="bg-dark text-white">
                     <tr>
                         <th class="ps-4 py-3">Order ID</th>
+                        <th>Type</th>
                         <th>Customer</th>
-                        <th>Email</th>
-                        <th>Total Amount</th>
-                        <th>Delivery Method</th>
+                        <th>Contact</th>
+                        <th>Amount / Budget</th>
                         <th>Status</th>
-                        <th>Order Date</th>
+                        <th>Date</th>
                         <th class="text-end pe-4 py-3">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($orders as $order)
+                        @php
+                            $isCustom = $order->order_type === 'Custom';
+                            $amount = $isCustom ? $order->budget : $order->total_amount;
+                            $contact = $isCustom ? ($order->phone_number ?? 'N/A') : $order->customer_email;
+                            $contactLabel = $isCustom ? 'Phone' : 'Email';
+                            
+                            $badgeClass = match($order->status) {
+                                'Pending' => 'bg-warning text-dark',
+                                'Processing' => 'bg-info text-dark',
+                                'Approved' => 'bg-info text-dark', // For Custom
+                                'Completed' => 'bg-success',
+                                'Cancelled', 'Rejected' => 'bg-danger',
+                                default => 'bg-secondary'
+                            };
+                        @endphp
                         <tr>
                             <td class="ps-4 fw-bold">#{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
-                            <td>{{ $order->user->name ?? 'Guest' }}</td>
-                            <td>{{ $order->customer_email }}</td>
-                            <td class="fw-bold">₱{{ number_format($order->total_amount, 2) }}</td>
                             <td>
-                                <span class="badge {{ $order->delivery_method === 'Delivery' ? 'bg-info text-dark' : 'bg-secondary' }}">
-                                    {{ $order->delivery_method }}
+                                <span class="badge {{ $isCustom ? 'bg-purple text-white' : 'bg-secondary' }}" style="{{ $isCustom ? 'background-color: #6f42c1;' : '' }}">
+                                    {{ $order->order_type }}
                                 </span>
                             </td>
+                            <td>{{ $order->user->name ?? 'Guest' }}</td>
                             <td>
-                                @php
-                                    $badgeClass = match($order->status) {
-                                        'Pending' => 'bg-warning text-dark',
-                                        'Processing' => 'bg-info text-dark',
-                                        'Completed' => 'bg-success',
-                                        'Cancelled' => 'bg-danger',
-                                        default => 'bg-secondary'
-                                    };
-                                @endphp
+                                <small class="text-muted d-block">{{ $contactLabel }}</small>
+                                <span class="fw-semibold small">{{ $contact }}</span>
+                            </td>
+                            <td class="fw-bold">₱{{ number_format($amount, 2) }}</td>
+                            <td>
                                 <span class="badge {{ $badgeClass }} px-3 py-2 rounded-pill">{{ $order->status }}</span>
                             </td>
-                            <td>{{ $order->created_at->format('M d, Y h:i A') }}</td>
+                            <td>{{ $order->created_at->format('M d, Y') }}</td>
                             <td class="text-end pe-4">
-                                <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{{ route('admin.orders.show', ['id' => $order->id, 'type' => $isCustom ? 'custom' : 'regular']) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <form action="{{ route('admin.orders.destroy', ['id' => $order->id, 'type' => $isCustom ? 'custom' : 'regular']) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this order? This action cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3" title="Delete Order">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -71,23 +89,29 @@
     <!-- MOBILE VIEW: Card Layout (Hidden on Desktop) -->
     <div class="d-md-none">
         @forelse($orders as $order)
+            @php
+                $isCustom = $order->order_type === 'Custom';
+                $amount = $isCustom ? $order->budget : $order->total_amount;
+                $contact = $isCustom ? ($order->phone_number ?? 'N/A') : $order->customer_email;
+                
+                $badgeClass = match($order->status) {
+                    'Pending' => 'bg-warning text-dark',
+                    'Processing', 'Approved' => 'bg-info text-dark',
+                    'Completed' => 'bg-success',
+                    'Cancelled', 'Rejected' => 'bg-danger',
+                    default => 'bg-secondary'
+                };
+            @endphp
             <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
                 <div class="card-body p-3">
-                    <!-- Card Header: Order ID + Status -->
+                    <!-- Card Header: Order ID + Type + Status -->
                     <div class="d-flex justify-content-between align-items-start mb-3 pb-2 border-bottom">
                         <div>
                             <h6 class="fw-bold mb-1">Order #{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h6>
-                            <small class="text-muted">{{ $order->created_at->format('M d, Y') }}</small>
+                            <span class="badge {{ $isCustom ? 'bg-purple text-white' : 'bg-secondary' }}" style="{{ $isCustom ? 'background-color: #6f42c1; font-size: 0.7rem;' : 'font-size: 0.7rem;' }}">
+                                {{ $order->order_type }} Order
+                            </span>
                         </div>
-                        @php
-                            $badgeClass = match($order->status) {
-                                'Pending' => 'bg-warning text-dark',
-                                'Processing' => 'bg-info text-dark',
-                                'Completed' => 'bg-success',
-                                'Cancelled' => 'bg-danger',
-                                default => 'bg-secondary'
-                            };
-                        @endphp
                         <span class="badge {{ $badgeClass }} px-3 py-2 rounded-pill">{{ $order->status }}</span>
                     </div>
 
@@ -98,31 +122,34 @@
                             <span class="fw-semibold">{{ $order->user->name ?? 'Guest' }}</span>
                         </div>
                         <div class="mb-2">
-                            <small class="text-muted d-block">Email</small>
-                            <span class="fw-semibold small">{{ $order->customer_email }}</span>
+                            <small class="text-muted d-block">Contact</small>
+                            <span class="fw-semibold small">{{ $contact }}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <div>
-                                <small class="text-muted d-block">Delivery Method</small>
-                                <span class="badge {{ $order->delivery_method === 'Delivery' ? 'bg-info text-dark' : 'bg-secondary' }} rounded-pill px-2 py-1">
-                                    {{ $order->delivery_method }}
-                                </span>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block">Total Amount</small>
-                                <span class="fw-bold fs-5" style="color: var(--primary-color);">{{ number_format($order->total_amount, 2) }}</span>
+                            <div class="text-end w-100">
+                                <small class="text-muted d-block">{{ $isCustom ? 'Budget' : 'Total Amount' }}</small>
+                                <span class="fw-bold fs-5" style="color: var(--primary-color);">₱{{ number_format($amount, 2) }}</span>
                             </div>
                         </div>
                         <div>
-                            <small class="text-muted d-block">Order Time</small>
-                            <span class="fw-semibold small">{{ $order->created_at->format('h:i A') }}</span>
+                            <small class="text-muted d-block">Date</small>
+                            <span class="fw-semibold small">{{ $order->created_at->format('M d, Y h:i A') }}</span>
                         </div>
                     </div>
 
-                    <!-- View Button -->
-                    <a href="{{ route('admin.orders.show', $order->id) }}" class="btn btn-outline-primary w-100 rounded-pill py-2">
-                        <i class="bi bi-eye me-2"></i>View Order Details
-                    </a>
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('admin.orders.show', ['id' => $order->id, 'type' => $isCustom ? 'custom' : 'regular']) }}" class="btn btn-outline-primary w-100 rounded-pill py-2">
+                            <i class="bi bi-eye me-2"></i>View Details
+                        </a>
+                        <form action="{{ route('admin.orders.destroy', ['id' => $order->id, 'type' => $isCustom ? 'custom' : 'regular']) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this order?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="btn btn-outline-danger w-100 rounded-pill py-2">
+                                <i class="bi bi-trash me-2"></i>Delete Order
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         @empty

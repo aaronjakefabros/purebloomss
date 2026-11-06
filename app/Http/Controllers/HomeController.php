@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
-use App\Models\Category;
 use App\Models\Color;
 use App\Models\Addon;
 use Illuminate\Http\Request;
@@ -19,9 +18,9 @@ class HomeController extends Controller
             $query->where('name', 'LIKE', '%' . $request->search . '%');
         }
 
-        // Filter by Category
+        // Filter by Category (Case-Insensitive para safe sa typing)
         if ($request->has('category') && $request->category != '') {
-            $query->where('category', $request->category);
+            $query->whereRaw('LOWER(category) = ?', [strtolower($request->category)]);
         }
 
         // Sort
@@ -44,7 +43,10 @@ class HomeController extends Controller
         }
 
         $products = $query->get();
-        $categories = Category::where('is_active', true)->get();
+        
+        // IDINAGDAG: Kukunin ang mga UNIQUE categories direkta mula sa products table
+        $categories = Product::distinct()->pluck('category')->filter()->sort()->values();
+        
         $colors = Color::all();
 
         return view('home', compact('products', 'categories', 'colors'));

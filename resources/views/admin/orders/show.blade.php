@@ -57,7 +57,7 @@
             <!-- Status Update Card -->
             <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
                 <h6 class="fw-bold mb-3">Update Order Status</h6>
-                <form action="{{ route('admin.orders.updateStatus', $order->id) }}" method="POST">
+                <form action="{{ route('admin.orders.updateStatus', ['id' => $order->id, 'type' => 'regular']) }}" method="POST">
                     @csrf
                     <div class="mb-3">
                         <select name="status" class="form-select">
@@ -67,7 +67,7 @@
                             <option value="Cancelled" {{ $order->status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary-custom w-100 rounded-pill">Save Status</button>
+                    <button type="submit" class="btn btn-primary-custom w-100 rounded-pill">Update</button>
                 </form>
             </div>
 
@@ -75,24 +75,42 @@
             <div class="card border-0 shadow-sm rounded-3 p-4 mb-4">
                 <h6 class="fw-bold mb-3">Delivery Details</h6>
                 <ul class="list-unstyled mb-0 small">
-                    <li class="mb-2">
+                    <li class="mb-3">
                         <strong class="text-muted d-block">Method:</strong>
                         <i class="bi {{ $order->delivery_method == 'Delivery' ? 'bi-truck' : 'bi-shop' }} me-1"></i> {{ $order->delivery_method }}
                     </li>
+                    
                     @if($order->delivery_method == 'Delivery')
-                        <li class="mb-2">
-                            <strong class="text-muted d-block">Address:</strong>
-                            {{ $order->delivery_address }}
+                        <li class="mb-3">
+                            <strong class="text-muted d-block">Delivery Address:</strong>
+                            <span class="d-block mt-1">
+                                {{ $order->house_no }}, {{ $order->street }}<br>
+                                Brgy. {{ $order->barangay }}, {{ $order->city }}<br>
+                                {{ $order->province }} {{ $order->postal_code }}
+                            </span>
                         </li>
-                        <li class="mb-2">
-                            <strong class="text-muted d-block">Date & Time:</strong>
-                            {{ $order->delivery_date }} - {{ $order->delivery_time }}
+                        <li class="mb-3">
+                            <strong class="text-muted d-block">Preferred Date & Time:</strong>
+                            <span class="d-block mt-1">
+                                @if($order->delivery_date)
+                                    {{ \Carbon\Carbon::parse($order->delivery_date)->format('F d, Y') }} 
+                                @else 
+                                    N/A 
+                                @endif
+                                - {{ $order->delivery_time ?? 'N/A' }}
+                            </span>
+                        </li>
+                    @else
+                        <li class="mb-3">
+                            <strong class="text-muted d-block">Pickup Note:</strong>
+                            <span class="text-success">Customer will pick up the order at the shop.</span>
                         </li>
                     @endif
+
                     <li>
-                        <strong class="text-muted d-block">Contact:</strong>
-                        {{ $order->customer_email }} <br>
-                        {{ $order->phone_number ?? 'N/A' }}
+                        <strong class="text-muted d-block">Contact Information:</strong>
+                        <i class="bi bi-envelope me-1"></i> {{ $order->customer_email }} <br>
+                        <i class="bi bi-telephone me-1"></i> {{ $order->phone_number ?? 'N/A' }}
                     </li>
                 </ul>
             </div>
@@ -102,11 +120,11 @@
                 <h6 class="fw-bold mb-3">Order Summary</h6>
                 <div class="d-flex justify-content-between mb-2">
                     <span class="text-muted">Subtotal</span>
-                    <span>₱{{ number_format($order->total_amount - $order->delivery_fee, 2) }}</span>
+                    <span>₱{{ number_format($order->total_amount - ($order->delivery_fee ?? 0), 2) }}</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
                     <span class="text-muted">Delivery Fee</span>
-                    <span>₱{{ number_format($order->delivery_fee, 2) }}</span>
+                    <span>₱{{ number_format($order->delivery_fee ?? 0, 2) }}</span>
                 </div>
                 <hr>
                 <div class="d-flex justify-content-between align-items-center">

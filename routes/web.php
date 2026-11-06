@@ -18,8 +18,11 @@ use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ColorController;
 use App\Http\Controllers\Admin\AddonController;
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\CustomOrderController as AdminCustomOrderController; // <-- NA-AYOS: Added alias
+use App\Http\Controllers\Admin\CustomOrderController as AdminCustomOrderController;
+
+// Models
 use App\Models\ActivityLog;
+use App\Models\CustomOrder; 
 
 // ============================================
 // 1. GUEST ROUTES (Hindi pa naka-login)
@@ -93,11 +96,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->route('admin.dashboard');
     });
     
-    // Admin Dashboard (May Recent Activity Logs)
+    // Admin Dashboard (May Recent Activity Logs AT Recent Custom Orders)
     Route::get('/dashboard', function () {
         // Kunin ang pinakabagong 5 activity logs kasama ang user details
         $recentLogs = ActivityLog::with('user')->latest()->take(5)->get();
-        return view('admin.dashboard', compact('recentLogs'));
+        
+        // Kunin ang pinakabagong 5 custom orders kasama ang user details
+        $recentCustomOrders = CustomOrder::with('user')->latest()->take(5)->get();
+        
+        // I-pass ang DALAWA sa view
+        return view('admin.dashboard', compact('recentLogs', 'recentCustomOrders'));
     })->name('dashboard');
     
     // Products Management
@@ -108,20 +116,29 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('colors', ColorController::class);
     Route::resource('addons', AddonController::class);
     
-    // Orders Management
+    // Orders Management (INUPDATE: Para suportahan ang merged Regular at Custom Orders + Delete)
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
-    Route::get('orders/{id}', [AdminOrderController::class, 'show'])->name('orders.show');
-    Route::post('orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::get('orders/{id}/{type?}', [AdminOrderController::class, 'show'])->name('orders.show');
+    Route::post('orders/{id}/{type?}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
+    Route::delete('orders/{id}/{type}', [AdminOrderController::class, 'destroy'])->name('orders.destroy');
     
     // Users Management
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Custom Orders Management (NA-AYOS: Gumamit ng AdminCustomOrderController)
+    // Custom Orders Management (Hiwalay na page para sa lahat ng custom orders, kahit pending/rejected)
     Route::get('custom-orders', [AdminCustomOrderController::class, 'index'])->name('custom-orders.index');
     Route::get('custom-orders/{id}', [AdminCustomOrderController::class, 'show'])->name('custom-orders.show');
     Route::post('custom-orders/{id}/status', [AdminCustomOrderController::class, 'updateStatus'])->name('custom-orders.updateStatus');
+    Route::delete('custom-orders/{id}', [AdminCustomOrderController::class, 'destroy'])->name('custom-orders.destroy');
 
     // Activity Logs Management (Full Page para sa Admin)
     Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
-});
+});  
+
+// ============================================
+// 4. PUBLIC ROUTES (Walang middleware - Para sa QR Code Scan)
+// ============================================
+Route::get('/qr', function () {
+    return view('qr');
+})->name('qr');

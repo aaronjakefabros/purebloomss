@@ -190,30 +190,127 @@
                         <div id="deliveryFields">
                             <div class="mb-3">
                                 <label class="form-label fw-semibold small text-muted">PHONE NUMBER</label>
-                                <input type="tel" name="phone_number" class="form-control form-control-lg @error('phone_number') is-invalid @enderror" value="{{ auth()->user()->phone ?? old('phone_number') }}" placeholder="09123456789">
+                                <input type="tel" name="phone_number" class="form-control form-control-lg @error('phone_number') is-invalid @enderror" value="{{ auth()->user()->phone ?? old('phone_number') }}" placeholder="09123456789" required>
                                 @error('phone_number') <div class="invalid-feedback">{{ $message }}</div> @enderror
                             </div>
 
+                            <!-- Structured Delivery Address -->
                             <div class="mb-3">
-                                <label class="form-label fw-semibold small text-muted">DELIVERY ADDRESS</label>
-                                <textarea name="delivery_address" class="form-control @error('delivery_address') is-invalid @enderror" rows="3" placeholder="House/Unit, Street, Barangay, City">{{ old('delivery_address') }}</textarea>
-                                @error('delivery_address') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                                <label class="form-label fw-semibold small text-muted mb-2">DELIVERY ADDRESS</label>
+                                <div class="row g-2">
+                                    <div class="col-12 col-md-4">
+                                        <input type="text" name="house_no" class="form-control form-control-sm @error('house_no') is-invalid @enderror" value="{{ old('house_no') }}" placeholder="House / Unit No. *" required>
+                                        @error('house_no') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12 col-md-8">
+                                        <input type="text" name="street" class="form-control form-control-sm @error('street') is-invalid @enderror" value="{{ old('street') }}" placeholder="Street / Subdivision *" required>
+                                        @error('street') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <input type="text" name="barangay" class="form-control form-control-sm @error('barangay') is-invalid @enderror" value="{{ old('barangay') }}" placeholder="Barangay *" required>
+                                        @error('barangay') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <input type="text" name="city" class="form-control form-control-sm @error('city') is-invalid @enderror" value="{{ old('city') }}" placeholder="City / Municipality *" required>
+                                        @error('city') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12 col-md-8">
+                                        <input type="text" name="province" class="form-control form-control-sm @error('province') is-invalid @enderror" value="{{ old('province', 'Ilocos Sur') }}" placeholder="Province">
+                                        @error('province') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <input type="text" name="postal_code" class="form-control form-control-sm @error('postal_code') is-invalid @enderror" value="{{ old('postal_code') }}" placeholder="Postal Code" maxlength="4">
+                                        @error('postal_code') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <label class="form-label fw-semibold small text-muted">DATE</label>
-                                    <input type="date" name="delivery_date" class="form-control @error('delivery_date') is-invalid @enderror" value="{{ old('delivery_date') }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                                    <label class="form-label fw-semibold small text-muted">DATE <span class="text-danger">*</span></label>
+                                    <input type="date" name="delivery_date" class="form-control @error('delivery_date') is-invalid @enderror" value="{{ old('delivery_date') }}" min="{{ date('Y-m-d', strtotime('+1 day')) }}" required>
+                                    @error('delivery_date') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label fw-semibold small text-muted">TIME</label>
-                                    <select name="delivery_time" class="form-select @error('delivery_time') is-invalid @enderror">
-                                        <option value="" disabled selected>Select</option>
+                                    <label class="form-label fw-semibold small text-muted">TIME <span class="text-danger">*</span></label>
+                                    <select name="delivery_time" class="form-select @error('delivery_time') is-invalid @enderror" required>
+                                        <option value="" disabled selected>Select Time</option>
                                         <option value="Morning (8AM-12PM)">Morning (8AM-12PM)</option>
                                         <option value="Afternoon (1PM-5PM)">Afternoon (1PM-5PM)</option>
                                     </select>
+                                    @error('delivery_time') <div class="invalid-feedback d-block small text-danger">{{ $message }}</div> @enderror
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- INADDED: Payment Method Section -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small text-muted mb-2">PAYMENT METHOD:</label>
+                            <div class="d-grid gap-2">
+                                <div class="form-check border rounded-3 p-3">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="paymentGCash" value="GCash" checked onchange="togglePaymentInfo()">
+                                    <label class="form-check-label fw-semibold" for="paymentGCash">
+                                        <i class="bi bi-wallet2 me-2 text-primary"></i>GCash
+                                    </label>
+                                    <small class="text-muted d-block mt-1">Pay via GCash QR Code</small>
+                                </div>
+                                
+                                <div class="form-check border rounded-3 p-3">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="paymentCOD" value="COD" onchange="togglePaymentInfo()">
+                                    <label class="form-check-label fw-semibold" for="paymentCOD">
+                                        <i class="bi bi-cash me-2 text-success"></i>Cash on Delivery
+                                    </label>
+                                    <small class="text-muted d-block mt-1">Pay when you receive</small>
+                                </div>
+                                
+                                <div class="form-check border rounded-3 p-3">
+                                    <input class="form-check-input" type="radio" name="payment_method" id="paymentPickup" value="Cash on Pickup" onchange="togglePaymentInfo()">
+                                    <label class="form-check-label fw-semibold" for="paymentPickup">
+                                        <i class="bi bi-shop me-2 text-warning"></i>Cash on Pickup
+                                    </label>
+                                    <small class="text-muted d-block mt-1">Pay when you pick up</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INADDED: GCash QR Code Display -->
+                        <div id="gcashInfo" class="card border-0 rounded-3 p-3 mb-3" style="background-color: #f0f8ff;">
+                            <h6 class="fw-bold mb-3 text-center">
+                                <i class="bi bi-qr-code me-2"></i>Scan to Pay with GCash
+                            </h6>
+                            
+                            <!-- GCash QR Code Image -->
+                            <div class="text-center mb-3">
+                                <!-- PALITAN MO ITO NG IYONG GCASH QR CODE IMAGE -->
+                                <img src="{{ asset('images/gcash-qr.jpg') }}" 
+                                     alt="GCash QR Code" 
+                                     class="img-fluid rounded-3 shadow" 
+                                     style="max-width: 250px; border: 3px solid #0075CD;">
+                            </div>
+                            
+                            <div class="alert alert-info small mb-0">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Instructions:</strong>
+                                <ol class="mb-0 mt-2 ps-3">
+                                    <li>Open your GCash app</li>
+                                    <li>Tap "Scan QR"</li>
+                                    <li>Scan the QR code above</li>
+                                    <li>Enter the total amount</li>
+                                    <li>Confirm payment & take a screenshot</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <!-- COD Info (Hidden by default) -->
+                        <div id="codInfo" class="alert alert-success small mb-3" style="display: none;">
+                            <i class="bi bi-cash-coin me-1"></i>
+                            <strong>Cash on Delivery:</strong> Prepare exact amount for a faster transaction.
+                        </div>
+
+                        <!-- Pickup Info (Hidden by default) -->
+                        <div id="pickupInfo" class="alert alert-warning small mb-3" style="display: none;">
+                            <i class="bi bi-shop me-1"></i>
+                            <strong>Cash on Pickup:</strong> We'll notify you via email/SMS when your order is ready.
                         </div>
 
                         <hr class="my-3">
@@ -312,7 +409,7 @@ function updateCartItemQuantity(cartKey, unitPrice, change) {
       });
 }
 
-// 2. Recalculate Grand Total (FIXED: Proper Token Discount Application)
+// 2. Recalculate Grand Total
 function recalculateGrandTotal() {
     let calculatedSubtotal = 0;
     @foreach($cart as $id => $item)
@@ -324,7 +421,6 @@ function recalculateGrandTotal() {
     const isDelivery = document.getElementById('methodDelivery') ? document.getElementById('methodDelivery').checked : true;
     const deliveryFee = isDelivery ? 100 : 0;
     
-    // Base Total (Bago ang discount)
     const baseTotal = subtotal + deliveryFee;
 
     const useTokensCheckbox = document.getElementById('useTokens');
@@ -332,20 +428,16 @@ function recalculateGrandTotal() {
     const tokenDiscountRow = document.getElementById('tokenDiscountRow');
     let tokenDiscount = 0;
 
-    // STRICT LOGIC: Check kung >= 1000 ang base total
     if (baseTotal >= 1000) {
-        // Enable checkbox at itago ang warning
         if (useTokensCheckbox) {
             useTokensCheckbox.disabled = false;
         }
         if (tokenWarning) tokenWarning.classList.add('d-none');
 
-        // Kung naka-check, bawasan ng 200
         if (useTokensCheckbox && useTokensCheckbox.checked) {
             tokenDiscount = 200;
         }
         
-        // Ipakita ang Token Discount row KUNG MAY DISCOUNT
         if (tokenDiscountRow) {
             if (tokenDiscount > 0) {
                 tokenDiscountRow.style.display = 'flex';
@@ -355,7 +447,6 @@ function recalculateGrandTotal() {
             }
         }
     } else {
-        // Disable checkbox at ipakita ang warning
         if (useTokensCheckbox) {
             useTokensCheckbox.disabled = true;
             useTokensCheckbox.checked = false;
@@ -366,18 +457,15 @@ function recalculateGrandTotal() {
             document.getElementById('amountNeeded').innerText = '₱' + needed.toLocaleString('en-US', {minimumFractionDigits: 2});
         }
         
-        // ITAGO ang Token Discount row
         if (tokenDiscountRow) {
             tokenDiscountRow.style.display = 'none';
         }
     }
 
-    // FINAL TOTAL: Base Total MINUS Token Discount
     const finalTotal = baseTotal - tokenDiscount;
 
-    // Update UI displays
     const summarySubtotalEl = document.getElementById('summarySubtotal');
-    if(summarySubtotalEl) summarySubtotalEl.innerText = '' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+    if(summarySubtotalEl) summarySubtotalEl.innerText = '₱' + subtotal.toLocaleString('en-US', {minimumFractionDigits: 2});
     
     const deliveryFeeDisplayEl = document.getElementById('deliveryFeeDisplay');
     if(deliveryFeeDisplayEl) deliveryFeeDisplayEl.innerText = '₱' + deliveryFee.toFixed(2);
@@ -415,7 +503,7 @@ function updateNavbarCartCount() {
 function updateOrderTotal() {
     recalculateGrandTotal();
     const deliveryFields = document.getElementById('deliveryFields');
-    const inputs = deliveryFields.querySelectorAll('input, textarea, select');
+    const inputs = deliveryFields.querySelectorAll('input, select');
     const isDelivery = document.getElementById('methodDelivery').checked;
     
     if (isDelivery) {
@@ -427,9 +515,35 @@ function updateOrderTotal() {
     }
 }
 
+// 5. INADDED: Toggle Payment Info (GCash/COD/Pickup)
+function togglePaymentInfo() {
+    const gcashInfo = document.getElementById('gcashInfo');
+    const codInfo = document.getElementById('codInfo');
+    const pickupInfo = document.getElementById('pickupInfo');
+    
+    const isGCash = document.getElementById('paymentGCash').checked;
+    const isCOD = document.getElementById('paymentCOD').checked;
+    const isPickup = document.getElementById('paymentPickup').checked;
+    
+    // Hide all first
+    gcashInfo.style.display = 'none';
+    codInfo.style.display = 'none';
+    pickupInfo.style.display = 'none';
+    
+    // Show selected
+    if (isGCash) {
+        gcashInfo.style.display = 'block';
+    } else if (isCOD) {
+        codInfo.style.display = 'block';
+    } else if (isPickup) {
+        pickupInfo.style.display = 'block';
+    }
+}
+
 // Initialize on load
 document.addEventListener('DOMContentLoaded', function() {
     updateOrderTotal();
+    togglePaymentInfo(); // Initialize payment info display
 });
 </script>
 @endif

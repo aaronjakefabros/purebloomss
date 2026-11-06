@@ -7,6 +7,7 @@ use App\Models\CustomOrder;
 use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\File;
 
 class CustomOrderController extends Controller
 {
@@ -39,5 +40,23 @@ class CustomOrderController extends Controller
         ActivityLog::record('Update Custom Order Status', "Admin {$adminName} changed Custom Order #{$id} status from '{$oldStatus}' to '{$request->status}'.");
 
         return redirect()->back()->with('success', 'Custom order status updated successfully!');
+    }
+
+    // IDINAGDAG: Delete Custom Order
+    public function destroy($id)
+    {
+        $order = CustomOrder::findOrFail($id);
+        
+        // Delete reference image if exists
+        if ($order->reference_image && File::exists(public_path('storage/' . $order->reference_image))) {
+            File::delete(public_path('storage/' . $order->reference_image));
+        }
+        
+        $adminName = Auth::user()->name;
+        ActivityLog::record('Delete Custom Order', "Admin {$adminName} deleted Custom Order #{$id} from {$order->user->name}.");
+
+        $order->delete();
+
+        return redirect()->route('admin.custom-orders.index')->with('success', 'Custom order deleted successfully!');
     }
 }

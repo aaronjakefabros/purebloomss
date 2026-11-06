@@ -23,7 +23,7 @@
                     <thead class="bg-light">
                         <tr>
                             <th class="ps-4 py-3">Order ID</th>
-                            <th>Date</th>
+                            <th>Date & Time</th>
                             <th>Total Amount</th>
                             <th>Delivery Date</th>
                             <th>Status</th>
@@ -34,7 +34,8 @@
                         @foreach($orders as $order)
                             <tr>
                                 <td class="ps-4 fw-bold">#{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
-                                <td>{{ $order->created_at->format('M d, Y') }}</td>
+                                <!-- INUPDATE: Dinagdagan ng oras (h:i A) -->
+                                <td>{{ $order->created_at->format('M d, Y h:i A') }}</td>
                                 <td class="fw-bold" style="color: var(--primary-color);">₱{{ number_format($order->total_amount, 2) }}</td>
                                 <td>
                                     {{ \Carbon\Carbon::parse($order->delivery_date)->format('M d, Y') }}
@@ -73,7 +74,8 @@
                         <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
                             <div>
                                 <h6 class="fw-bold mb-1">Order #{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</h6>
-                                <small class="text-muted">{{ $order->created_at->format('M d, Y') }}</small>
+                                <!-- INUPDATE: Dinagdagan ng oras (h:i A) -->
+                                <small class="text-muted">{{ $order->created_at->format('M d, Y h:i A') }}</small>
                             </div>
                             @php
                                 $badgeClass = match($order->status) {

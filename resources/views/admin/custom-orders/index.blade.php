@@ -28,7 +28,7 @@
                             <td class="ps-4 fw-bold">#{{ str_pad($order->id, 5, '0', STR_PAD_LEFT) }}</td>
                             <td>
                                 {{ $order->user->name ?? 'Guest' }}<br>
-                                <small class="text-muted">{{ $order->phone_number }}</small>
+                                <small class="text-muted">{{ $order->phone_number ?? 'N/A' }}</small>
                             </td>
                             <td>{{ $order->occasion }}</td>
                             <td class="fw-bold">₱{{ number_format($order->budget ?? 0, 2) }}</td>
@@ -46,18 +46,33 @@
                                 <span class="badge {{ $badgeClass }}">{{ $order->status }}</span>
                             </td>
                             <td class="text-end pe-4">
-                                <a href="{{ route('admin.custom-orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <!-- View Button -->
+                                    <a href="{{ route('admin.custom-orders.show', $order->id) }}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    
+                                    <!-- Delete Button -->
+                                    <form action="{{ route('admin.custom-orders.destroy', $order->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this custom order? This action cannot be undone.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Order">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="text-center py-4 text-muted">No custom order requests found.</td>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox display-6 text-muted opacity-25 d-block mb-2"></i>
+                                No custom order requests found.
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
     </div>
-@endsection
+@endsection  

@@ -50,17 +50,12 @@
                     </div>
                 </div>
 
-                <!-- Category -->
+                <!-- Category (PINALITAN NA NG TEXT INPUT) -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Category <span class="text-danger">*</span></label>
-                    <select name="category" class="form-select @error('category') is-invalid @enderror" required>
-                        <option value="">Select Category</option>
-                        @foreach($categories as $category)
-                            <option value="{{ $category->name }}" {{ old('category', $product->category) == $category->name ? 'selected' : '' }}>
-                                {{ $category->name }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <input type="text" name="category" class="form-control @error('category') is-invalid @enderror" 
+                           value="{{ old('category', $product->category) }}" required placeholder="e.g., Roses, Tulips, Sunflowers">
+                    <small class="text-muted">I-type ang category name.</small>
                     @error('category') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
             </div>

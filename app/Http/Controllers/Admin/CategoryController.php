@@ -33,12 +33,13 @@ class CategoryController extends Controller
             $imagePath = $request->file('image')->store('categories', 'public');
         }
 
+        // IDINAGDAG: 'is_active' => true para automatic lumabas sa user side
         Category::create([
             'name' => $request->name,
             'slug' => Str::slug($request->name),
             'description' => $request->description,
             'image' => $imagePath,
-            'is_active' => true,
+            'is_active' => true, 
         ]);
 
         return redirect()->route('admin.categories.index')->with('success', 'Category created successfully!');
@@ -68,6 +69,14 @@ class CategoryController extends Controller
         $category->name = $request->name;
         $category->slug = Str::slug($request->name);
         $category->description = $request->description;
+        
+        // Siguraduhing active ang category (o i-update base sa checkbox kung meron)
+        // Kung may checkbox ka sa form na pangalan ay 'is_active', gamitin ito:
+        // $category->is_active = $request->has('is_active');
+        
+        // Kung gusto mong laging active ang category kahit i-edit:
+        $category->is_active = true; 
+
         $category->save();
 
         return redirect()->route('admin.categories.index')->with('success', 'Category updated successfully!');

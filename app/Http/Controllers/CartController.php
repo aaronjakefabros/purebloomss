@@ -108,9 +108,15 @@ class CartController extends Controller
             'use_tokens' => 'nullable|boolean',
         ];
 
+        // INUPDATE: Validation para sa hiwalay na address fields
         if ($request->delivery_method === 'Delivery') {
             $rules['phone_number'] = 'required|string|max:20';
-            $rules['delivery_address'] = 'required|string';
+            $rules['house_no'] = 'required|string|max:255';
+            $rules['street'] = 'required|string|max:255';
+            $rules['barangay'] = 'required|string|max:255';
+            $rules['city'] = 'required|string|max:255';
+            $rules['province'] = 'nullable|string|max:255';
+            $rules['postal_code'] = 'nullable|string|max:10';
             $rules['delivery_date'] = 'required|date|after_or_equal:today';
             $rules['delivery_time'] = 'required|string';
         }
@@ -142,7 +148,7 @@ class CartController extends Controller
         $finalTotal = $totalAmount - $tokenDiscount;
         // ==========================================
 
-        // 1. Create the main Order record
+        // 1. Create the main Order record (INUPDATE: Hiwalay na address fields)
         $order = Order::create([
             'user_id' => $user->id, 
             'total_amount' => $finalTotal,
@@ -151,13 +157,21 @@ class CartController extends Controller
             'delivery_method' => $deliveryMethod,
             'delivery_fee' => $deliveryFee,
             'phone_number' => $request->phone_number,
-            'delivery_address' => $request->delivery_address,
+            
+            // Mga Bagong Address Fields
+            'house_no' => $request->house_no,
+            'street' => $request->street,
+            'barangay' => $request->barangay,
+            'city' => $request->city,
+            'province' => $request->province,
+            'postal_code' => $request->postal_code,
+            
             'delivery_date' => $request->delivery_date,
             'delivery_time' => $request->delivery_time,
             'messenger_link' => 'https://m.me/pureblooms?ref=order_' . now()->timestamp,
         ]);
 
-        // 2. Create Order Items AND DEDUCT STOCK (IN-UPDATE PARA MAS SOLID)
+        // 2. Create Order Items AND DEDUCT STOCK
         foreach ($cart as $cartKey => $item) {
             OrderItem::create([
                 'order_id' => $order->id,
@@ -168,10 +182,9 @@ class CartController extends Controller
                 'addons' => $item['addons'] ?? null,
             ]);
 
-            // MAS SOLID NA STOCK DEDUCTION
+            // Solid na Stock Deduction
             $product = Product::find($item['product_id']);
             if ($product) {
-                // Gamitin ang decrement() para siguradong mabawasan ang stock nang atomic at iwas negative
                 $product->decrement('stock', $item['quantity']);
             }
         }

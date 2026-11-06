@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Manila', // INUPDATE: Para maging Philippine Time (UTC+8)
 
     /*
     |--------------------------------------------------------------------------

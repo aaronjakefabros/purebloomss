@@ -1,4 +1,5 @@
 @extends('admin.layouts.app')
+
 @section('title', 'Dashboard')
 
 @section('content')
@@ -32,13 +33,15 @@
         </div>
     </div>
 
-    <!-- Total Orders -->
+    <!-- Total Orders (INUPDATE: Kasama na ang Approved Custom Orders) -->
     <div class="col-12 col-sm-6 col-lg-4">
         <div class="card stat-card p-4 h-100">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="text-muted mb-2 small text-uppercase fw-semibold">Total Orders</h6>
-                    <h2 class="fw-bold mb-0" style="color: var(--primary-color); font-size: 2rem;">{{ \App\Models\Order::count() }}</h2>
+                    <h2 class="fw-bold mb-0" style="color: var(--primary-color); font-size: 2rem;">
+                        {{ \App\Models\Order::count() + \App\Models\CustomOrder::where('status', 'Approved')->count() }}
+                    </h2>
                 </div>
                 <div class="stat-icon" style="background-color: #fff3cd; color: #ffc107;">
                     <i class="bi bi-bag-check fs-3"></i>
@@ -64,8 +67,8 @@
 </div>
 
 <!-- Recent Activity & Quick Actions -->
-<div class="row g-3 g-md-4">
-    <!-- RECENT ACTIVITY LOGS (IDINAGDAG) -->
+<div class="row g-3 g-md-4 mb-4">
+    <!-- RECENT ACTIVITY LOGS -->
     <div class="col-12 col-lg-8">
         <div class="card border-0 shadow-sm rounded-3 p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -143,14 +146,14 @@
                 <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-secondary rounded-pill text-start">
                     <i class="bi bi-bag me-2"></i>Manage Orders
                 </a>
+                <a href="{{ route('admin.custom-orders.index') }}" class="btn btn-outline-warning rounded-pill text-start border-warning text-warning">
+                    <i class="bi bi-stars me-2"></i>Manage Custom Orders
+                </a>
                 <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary rounded-pill text-start">
                     <i class="bi bi-people me-2"></i>Manage Users
-                </a>
-                <a href="{{ route('admin.activity-logs.index') }}" class="btn btn-outline-dark rounded-pill text-start">
-                    <i class="bi bi-shield-lock me-2"></i>View All Activity Logs
                 </a>
             </div>
         </div>
     </div>
 </div>
-@endsection  
+@endsection

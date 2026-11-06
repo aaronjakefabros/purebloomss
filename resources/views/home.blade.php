@@ -50,8 +50,9 @@
                             <select name="category" class="form-select form-select-sm form-select-md">
                                 <option value="">All Categories</option>
                                 @foreach($categories as $category)
-                                    <option value="{{ $category->name }}" {{ request('category') == $category->name ? 'selected' : '' }}>
-                                        {{ $category->name }}
+                                    <!-- BINAGO: $category na lang, hindi na $category->name -->
+                                    <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>
+                                        {{ $category }}
                                     </option>
                                 @endforeach
                             </select>

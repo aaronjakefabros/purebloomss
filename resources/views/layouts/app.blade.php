@@ -175,71 +175,82 @@
         }
 
         /* ========================================================= */
-        /* COMPLETE MOBILE NAVBAR FIX - LEFT ALIGN EVERYTHING        */
+        /* MOBILE NAVBAR - ALWAYS VISIBLE MENU                       */
         /* ========================================================= */
         @media (max-width: 991.98px) {
-            /* Force navbar collapse to align left */
+            /* Show navbar collapse always on mobile */
             .navbar-collapse {
-                text-align: left !important;
+                display: block !important;
+                padding: 15px 0 !important;
+                border-top: 1px solid var(--secondary-color);
+                margin-top: 10px;
             }
 
-            /* Force all nav items to align left */
-            .navbar-collapse .navbar-nav {
-                text-align: left !important;
-                align-items: flex-start !important;
+            /* Hide the hamburger button on mobile */
+            .navbar-toggler {
+                display: none !important;
             }
 
-            /* Force all nav items to be left-aligned */
-            .navbar-collapse .nav-item {
-                text-align: left !important;
-                width: 100% !important;
+            /* Make nav items compact */
+            .navbar-nav {
+                flex-direction: row !important;
+                flex-wrap: wrap !important;
+                gap: 5px;
             }
 
-            /* Force all nav links to align left */
-            .navbar-collapse .nav-link {
-                text-align: left !important;
-                justify-content: flex-start !important;
+            .nav-item {
+                flex: 0 0 auto;
+                margin-bottom: 5px;
             }
 
-            /* Force dropdown menu to align left */
-            .navbar-collapse .dropdown-menu {
-                text-align: left !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                padding: 10px 15px !important;
-                margin-top: 10px !important;
+            .nav-link {
+                padding: 8px 12px !important;
+                font-size: 0.85rem !important;
+                border-radius: 20px !important;
+                background-color: var(--secondary-color) !important;
             }
 
-            /* Force dropdown items to align left */
-            .navbar-collapse .dropdown-item {
-                text-align: left !important;
-                justify-content: flex-start !important;
-                align-items: center !important;
+            /* Hide user name, show icons only */
+            .nav-item.dropdown > a {
+                display: none !important;
+            }
+
+            /* Show mobile menu items inline */
+            .mobile-menu-wrapper {
                 display: flex !important;
-                padding: 12px 15px !important;
-                border-radius: 8px !important;
-                margin-bottom: 5px !important;
+                flex-wrap: wrap !important;
+                gap: 5px;
+                padding: 10px 0;
+                width: 100%;
             }
 
-            /* Force icons to stay on the left */
-            .navbar-collapse .dropdown-item i {
-                margin-right: 12px !important;
-                min-width: 20px !important;
-                text-align: center !important;
-                display: inline-block !important;
+            .mobile-menu-item {
+                display: inline-flex !important;
+                flex: 0 0 auto;
             }
 
-            /* Push badges to the far right */
-            .navbar-collapse .dropdown-item .badge {
-                margin-left: auto !important;
-                margin-right: 0 !important;
+            .mobile-menu-item a {
+                padding: 8px 12px !important;
+                font-size: 0.8rem !important;
+                border-radius: 20px !important;
+                background-color: #f8f9fa !important;
+                white-space: nowrap;
             }
 
-            /* Nuclear option: Override ANY inherited alignment */
-            .navbar-collapse *,
-            .navbar-collapse .dropdown-menu *,
-            .navbar-collapse .dropdown-menu li {
-                text-align: left !important;
+            .mobile-menu-item a:hover {
+                background-color: var(--secondary-color) !important;
+            }
+
+            /* Hide desktop dropdown */
+            .desktop-dropdown {
+                display: none !important;
+            }
+        }
+
+        /* Desktop - Keep original layout */
+        @media (min-width: 992px) {
+            .mobile-menu-wrapper {
+                display: none !important;
             }
         }
     </style>
@@ -256,12 +267,13 @@
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Shop</a></li>
                     <li class="nav-item">
                         <a class="nav-link position-relative" href="{{ route('cart.index') }}">
-                            <i class="bi bi-bag-heart fs-5"></i>
+                            <i class="bi bi-bag-heart"></i>
                             @php $cartCount = collect(session('cart', []))->sum('quantity'); @endphp
                             @if($cartCount > 0)
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem;">
@@ -272,71 +284,41 @@
                     </li>
                     
                     @auth
-                        <li class="nav-item dropdown ms-2">
+                        <!-- DESKTOP: Dropdown Menu -->
+                        <li class="nav-item dropdown ms-2 desktop-dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="bi bi-person-circle fs-5"></i> {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-3">
                                 @if(Auth::user()->role === 'admin')
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-                                            <i class="bi bi-speedometer2"></i> Admin Dashboard
-                                        </a>
-                                    </li>
+                                    <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="bi bi-speedometer2"></i> Admin Dashboard</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                 @endif
-
-                                <li>
-                                    <a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('customer.dashboard') }}">
-                                        <span><i class="bi bi-coin text-warning"></i> My Tokens</span>
-                                        <span class="badge bg-warning text-dark rounded-pill">
-                                            {{ number_format(Auth::user()->wallet_balance ?? 0, 0) }}
-                                        </span>
-                                    </a>
-                                </li>
+                                <li><a class="dropdown-item d-flex justify-content-between align-items-center" href="{{ route('customer.dashboard') }}">
+                                    <span><i class="bi bi-coin text-warning"></i> My Tokens</span>
+                                    <span class="badge bg-warning text-dark rounded-pill">{{ number_format(Auth::user()->wallet_balance ?? 0, 0) }}</span>
+                                </a></li>
                                 <li><hr class="dropdown-divider"></li>
-
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('custom-order.create') }}">
-                                        <i class="bi bi-palette"></i> Custom Order Request
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('customer.orders.index') }}">
-                                        <i class="bi bi-bag-check"></i> My Orders
-                                    </a>
-                                </li>
-                                
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('customer.dashboard') }}">
-                                        <i class="bi bi-speedometer2"></i> My Dashboard
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('customer.profile.edit') }}">
-                                        <i class="bi bi-person-gear"></i> Profile Settings
-                                    </a>
-                                </li>
-
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('customer.activity-logs.index') }}">
-                                        <i class="bi bi-clock-history"></i> My Activity History
-                                    </a>
-                                </li>
-
+                                <li><a class="dropdown-item" href="{{ route('custom-order.create') }}"><i class="bi bi-palette"></i> Custom Order</a></li>
+                                <li><a class="dropdown-item" href="{{ route('customer.orders.index') }}"><i class="bi bi-bag-check"></i> My Orders</a></li>
+                                <li><a class="dropdown-item" href="{{ route('customer.dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person-gear"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="{{ route('customer.activity-logs.index') }}"><i class="bi bi-clock-history"></i> Activity</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{{ route('logout') }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger">
-                                            <i class="bi bi-box-arrow-right"></i> Logout
-                                        </button>
-                                    </form>
-                                </li>
+                                <li><form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</button></form></li>
                             </ul>
                         </li>
+
+                        <!-- MOBILE: Always visible menu items -->
+                        <div class="mobile-menu-wrapper d-lg-none">
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('customer.dashboard') }}"><i class="bi bi-coin text-warning"></i> Tokens: {{ number_format(Auth::user()->wallet_balance ?? 0, 0) }}</a></li>
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('custom-order.create') }}"><i class="bi bi-palette"></i> Custom Order</a></li>
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('customer.orders.index') }}"><i class="bi bi-bag-check"></i> Orders</a></li>
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('customer.dashboard') }}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('customer.profile.edit') }}"><i class="bi bi-person-gear"></i> Profile</a></li>
+                            <li class="mobile-menu-item"><a class="dropdown-item" href="{{ route('customer.activity-logs.index') }}"><i class="bi bi-clock-history"></i> Activity</a></li>
+                            <li class="mobile-menu-item"><form action="{{ route('logout') }}" method="POST">@csrf<button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right"></i> Logout</button></form></li>
+                        </div>
                     @else
                         <li class="nav-item ms-2">
                             <a class="btn btn-outline-secondary btn-sm rounded-pill px-3" href="{{ route('register') }}">Register</a>
