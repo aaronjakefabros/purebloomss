@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Mail\Transport\GmailApiTransport;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
@@ -24,6 +25,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Mail::extend('gmail_api', function (array $config) {
+            foreach (['client_id', 'client_secret', 'refresh_token'] as $key) {
+                if (! is_string($config[$key] ?? null) || trim($config[$key]) === '') {
+                    throw new InvalidArgumentException('The Gmail API mailer requires GOOGLE_'.strtoupper($key).' to be configured.');
+                }
+            }
+
+            return new GmailApiTransport(
+                $config['client_id'],
+                $config['client_secret'],
+                $config['refresh_token'],
+                HttpClient::create($config['client'] ?? [])
+            );
+        });
+
         Mail::extend('brevo', function (array $config) {
             $apiKey = $config['key'] ?? null;
 

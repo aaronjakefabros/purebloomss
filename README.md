@@ -7,6 +7,21 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Deploying email on Render
+
+When `GOOGLE_REFRESH_TOKEN` is configured, the app automatically uses the Gmail API over HTTPS for email; without it, the configured `MAIL_MAILER` is used (for example, local SMTP).
+
+In the Render service's **Environment** settings, add:
+
+- `MAIL_USERNAME`: the sender Gmail address
+- `GOOGLE_CLIENT_ID`: OAuth client ID
+- `GOOGLE_CLIENT_SECRET`: OAuth client secret
+- `GOOGLE_REFRESH_TOKEN`: OAuth refresh token with the `gmail.send` scope
+- `MAIL_FROM_NAME`: `Pureblooms` (optional; defaults to the app name)
+- `APP_DEBUG`: `false`
+
+Keep OAuth credentials private. The Gmail account must be the same account authorized for the refresh token. After saving the variables, deploy the latest code. Gmail API delivery does not require SMTP credentials or ports.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
