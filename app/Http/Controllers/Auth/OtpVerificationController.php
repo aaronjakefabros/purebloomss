@@ -3,100 +3,126 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\OtpMail;
+use App\Models\ActivityLog;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
-use App\Mail\OtpMail;
-use Carbon\Carbon;
 
 class OtpVerificationController extends Controller
 {
-    // Ipakita ang OTP Verification Form
     public function showVerifyForm()
     {
-        // Check kung may session
-        if (!session()->has('otp_user_id')) {
-            return redirect()->route('register')->with('error', 'Session expired. Please register again.');
+        $pendingRegistration = session('pending_registration');
+
+        if (! is_array($pendingRegistration)) {
+            return redirect()->route('register')->with('error', 'Your registration session expired. Please register again.');
         }
 
-        $user = User::find(session('otp_user_id'));
-        if (!$user) {
-            return redirect()->route('register')->with('error', 'User not found. Please register again.');
+        if ($this->otpHasExpired($pendingRegistration)) {
+            session()->forget('pending_registration');
+
+            return redirect()->route('register')->with('error', 'Your OTP expired. Please register again.');
         }
 
-        return view('auth.verify-otp');
+        return view('auth.verify-otp', [
+            'email' => $pendingRegistration['email'],
+        ]);
     }
 
-    // I-verify ang OTP
     public function verify(Request $request)
     {
         $request->validate([
             'otp' => 'required|numeric|digits:6',
         ]);
 
-        // Get user ID from session
-        $userId = session('otp_user_id');
-        
-        // Debug: Check if session exists
-        if (!$userId) {
-            return redirect()->route('register')->with('error', 'Session lost. Please register again.');
+        $pendingRegistration = session('pending_registration');
+
+        if (! is_array($pendingRegistration)) {
+            return redirect()->route('register')->with('error', 'Your registration session expired. Please register again.');
         }
 
-        // Find user
-        $user = User::find($userId);
+        if ($this->otpHasExpired($pendingRegistration)) {
+            session()->forget('pending_registration');
 
-        // Check if user exists and has OTP
-        if (!$user || !$user->otp) {
-            return redirect()->route('register')->with('error', 'Invalid session or OTP already used. Please register again.');
+            return redirect()->route('register')->with('error', 'Your OTP expired. Please register again.');
         }
 
-        // Check if OTP expired
-        if (!$user->otp_expires_at || Carbon::now()->greaterThan($user->otp_expires_at)) {
-            // Delete expired user
-            $user->delete();
-            return redirect()->route('register')->with('error', 'OTP expired. Please register again.');
+        $submittedOtpHash = hash_hmac('sha256', (string) $request->input('otp'), config('app.key'));
+
+        if (
+            ! isset($pendingRegistration['otp_hash'])
+            || ! is_string($pendingRegistration['otp_hash'])
+            || ! hash_equals($pendingRegistration['otp_hash'], $submittedOtpHash)
+        ) {
+            return back()->with('error', 'Invalid OTP. Please try again.');
         }
 
-        // Verify OTP
-        if ($user->otp === $request->otp) {
-            // Success!
-            $user->is_verified = true;
-            $user->otp = null;
-            $user->otp_expires_at = null;
-            $user->save();
+        if (User::where('email', $pendingRegistration['email'])->exists()) {
+            session()->forget('pending_registration');
 
-            // Login user (AUTO LOGIN - hindi na kailangan mag-login ulit)
-            Auth::login($user, true);
-            
-            // Clear OTP session
-            session()->forget('otp_user_id');
-            session()->regenerate();
-            session()->save();
-
-            // Redirect to Home/Dashboard - naka-login na!
-            return redirect()->route('home')->with('success', 'Email verified successfully! Welcome to Pureblooms.');
+            return redirect()->route('register')->with('error', 'An account with this email already exists. Please sign in.');
         }
 
-        return back()->with('error', 'Invalid OTP. Please try again.');
+        $user = User::create([
+            'name' => $pendingRegistration['name'],
+            'email' => $pendingRegistration['email'],
+            'phone' => $pendingRegistration['phone'],
+            'password' => $pendingRegistration['password'],
+            'role' => 'customer',
+            'is_verified' => true,
+            'email_verified_at' => now(),
+            'wallet_balance' => 200.00,
+        ]);
+
+        ActivityLog::record(
+            'Register',
+            'New user registered: '.$user->email.' and received 200 Welcome Tokens.'
+        );
+
+        Auth::login($user, true);
+
+        session()->forget('pending_registration');
+        $request->session()->regenerate();
+
+        return redirect()->route('home')->with('success', 'Email verified successfully! Welcome to Pureblooms.');
     }
 
-    // Resend OTP
     public function resendOtp()
     {
-        $userId = session('otp_user_id');
-        $user = User::find($userId);
-        
-        if ($user && $user->otp) {
-            $otp = rand(100000, 999999);
-            $user->otp = $otp;
-            $user->otp_expires_at = Carbon::now()->addMinutes(10);
-            $user->save();
+        $pendingRegistration = session('pending_registration');
 
-            Mail::to($user->email)->send(new OtpMail($otp, $user->name));
-            return back()->with('success', 'New OTP sent to your email!');
+        if (! is_array($pendingRegistration)) {
+            return redirect()->route('register')->with('error', 'Your registration session expired. Please register again.');
         }
-        
-        return redirect()->route('register')->with('error', 'Session expired. Please register again.');
+
+        if ($this->otpHasExpired($pendingRegistration)) {
+            session()->forget('pending_registration');
+
+            return redirect()->route('register')->with('error', 'Your OTP expired. Please register again.');
+        }
+
+        $otp = (string) random_int(100000, 999999);
+        $pendingRegistration['otp_hash'] = hash_hmac('sha256', $otp, config('app.key'));
+        $pendingRegistration['expires_at'] = now()->addMinutes(10)->timestamp;
+
+        Mail::to($pendingRegistration['email'])->send(
+            new OtpMail($otp, $pendingRegistration['name'])
+        );
+
+        session(['pending_registration' => $pendingRegistration]);
+
+        return back()->with('success', 'A new verification code was sent to your email.');
+    }
+
+    private function otpHasExpired(array $pendingRegistration): bool
+    {
+        if (! isset($pendingRegistration['expires_at']) || ! is_numeric($pendingRegistration['expires_at'])) {
+            return true;
+        }
+
+        return Carbon::now()->greaterThan(Carbon::createFromTimestamp((int) $pendingRegistration['expires_at']));
     }
 }

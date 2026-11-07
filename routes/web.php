@@ -42,8 +42,8 @@ Route::middleware('guest')->group(function () {
     
     // OTP Verification
     Route::get('/verify-otp', [OtpVerificationController::class, 'showVerifyForm'])->name('otp.verify');
-    Route::post('/verify-otp', [OtpVerificationController::class, 'verify']);
-    Route::post('/resend-otp', [OtpVerificationController::class, 'resendOtp'])->name('otp.resend');
+    Route::post('/verify-otp', [OtpVerificationController::class, 'verify'])->middleware('throttle:6,1');
+    Route::post('/resend-otp', [OtpVerificationController::class, 'resendOtp'])->middleware('throttle:3,10')->name('otp.resend');
 });
 
 // ============================================
