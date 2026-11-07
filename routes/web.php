@@ -79,7 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('customer.profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('customer.profile.update');
 
-    // Customer Activity History (Makikita lang nila ang sarili nilang logs)
+    // Customer Activity History
     Route::get('/my-activity', [CustomerActivityLogController::class, 'index'])->name('customer.activity-logs.index');
     
     // Logout
@@ -96,15 +96,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
         return redirect()->route('admin.dashboard');
     });
     
-    // Admin Dashboard (May Recent Activity Logs AT Recent Custom Orders)
+    // Admin Dashboard
     Route::get('/dashboard', function () {
-        // Kunin ang pinakabagong 5 activity logs kasama ang user details
         $recentLogs = ActivityLog::with('user')->latest()->take(5)->get();
-        
-        // Kunin ang pinakabagong 5 custom orders kasama ang user details
         $recentCustomOrders = CustomOrder::with('user')->latest()->take(5)->get();
-        
-        // I-pass ang DALAWA sa view
         return view('admin.dashboard', compact('recentLogs', 'recentCustomOrders'));
     })->name('dashboard');
     
@@ -116,7 +111,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::resource('colors', ColorController::class);
     Route::resource('addons', AddonController::class);
     
-    // Orders Management (INUPDATE: Para suportahan ang merged Regular at Custom Orders + Delete)
+    // Orders Management (Merged Regular & Custom)
     Route::get('orders', [AdminOrderController::class, 'index'])->name('orders.index');
     Route::get('orders/{id}/{type?}', [AdminOrderController::class, 'show'])->name('orders.show');
     Route::post('orders/{id}/{type?}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.updateStatus');
@@ -126,18 +121,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('users', [UserController::class, 'index'])->name('users.index');
     Route::delete('users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-    // Custom Orders Management (Hiwalay na page para sa lahat ng custom orders, kahit pending/rejected)
+    // Custom Orders Management (Lahat ng status: Pending, Approved, Rejected)
     Route::get('custom-orders', [AdminCustomOrderController::class, 'index'])->name('custom-orders.index');
     Route::get('custom-orders/{id}', [AdminCustomOrderController::class, 'show'])->name('custom-orders.show');
     Route::post('custom-orders/{id}/status', [AdminCustomOrderController::class, 'updateStatus'])->name('custom-orders.updateStatus');
     Route::delete('custom-orders/{id}', [AdminCustomOrderController::class, 'destroy'])->name('custom-orders.destroy');
 
-    // Activity Logs Management (Full Page para sa Admin)
+    // Activity Logs Management
     Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
 });  
 
 // ============================================
-// 4. PUBLIC ROUTES (Walang middleware - Para sa QR Code Scan)
+// 4. PUBLIC ROUTES (Para sa QR Code Scan)
 // ============================================
 Route::get('/qr', function () {
     return view('qr');

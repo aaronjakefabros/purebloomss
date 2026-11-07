@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Models\CustomOrder; // <-- IDINAGDAG
+use App\Models\CustomOrder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OrderStatusUpdatedMail;
-use Illuminate\Support\Facades\File; // <-- IDINAGDAG para sa image deletion
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 
 class OrderController extends Controller
 {
@@ -20,8 +21,8 @@ class OrderController extends Controller
             return $order;
         });
 
-        // 2. Kunin ang Custom Orders na 'Approved' na
-        $customOrders = CustomOrder::with('user')->where('status', 'Approved')->get()->map(function($order) {
+        // 2. Kunin ang LAHAT ng Custom Orders (INAYOS: Inalis ang 'Approved' filter para makita ang Pending)
+        $customOrders = CustomOrder::with('user')->get()->map(function($order) {
             $order->order_type = 'Custom';
             return $order;
         });
@@ -36,7 +37,7 @@ class OrderController extends Controller
     {
         if ($type === 'custom') {
             $order = CustomOrder::with('user')->findOrFail($id);
-            return view('admin.custom-orders.show', compact('order')); // Re-use existing view
+            return view('admin.custom-orders.show', compact('order'));
         }
         
         $order = Order::with(['user', 'items.product'])->findOrFail($id);
@@ -67,26 +68,23 @@ class OrderController extends Controller
             try {
                 Mail::to($order->customer_email)->send(new OrderStatusUpdatedMail($order));
             } catch (\Exception $e) {
-                \Log::error('Failed to send status update email: ' . $e->getMessage());
+                Log::error('Failed to send status update email: ' . $e->getMessage());
             }
         }
 
         return redirect()->back()->with('success', 'Order status updated successfully! Customer has been notified via email.');
     }
 
-    // <-- IDINAGDAG: Delete Order (Regular or Custom)
     public function destroy($id, $type)
     {
         if ($type === 'custom') {
             $order = CustomOrder::findOrFail($id);
-            // Delete reference image if exists
             if ($order->reference_image && File::exists(public_path('storage/' . $order->reference_image))) {
                 File::delete(public_path('storage/' . $order->reference_image));
             }
             $order->delete();
         } else {
             $order = Order::findOrFail($id);
-            // Optional: Delete related order items here if needed
             $order->delete();
         }
 
